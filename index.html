@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Three.js Single HTML</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    canvas { display: block; }
+    #info-show{
+	    position:absolute;
+	    width:100%;
+	    background-color:rgba(96,96,96,0.5);
+	    padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+	    /*padding-left: 0.5rem;*/
+	    user-select: none;
+    }
+    #escape-show{
+	    user-select: none;
+	    position:absolute;
+	    left:50%;
+	    top:50%;
+	    padding: 0.5rem;
+	    transform:translate(-50%,-50%);
+	    background-color:rgba(96,96,96,0.5);
+	    border: 2px gray solid;
+	    align-items: center;
+	    border-radius: 0.5rem;
+    }
+    .no-show{
+	    display:none;
+    }
+    .info-fixed-size{
+	    display: inline-grid;
+	    min-inline-size: 5rem;
+    };
+  </style>
+</head>
+<body>
+	<script type="importmap">
+		{"imports":{
+		"THREE": "https://unpkg.com/three@0.160.0/build/three.module.js"
+		}}
+	</script><!--
+import * as _THREE from 
+const THREE = _THREE;
+	-->
+	<!-- <script type="module" src="mazeGen.js"></script> -->
+	<div id="info-show">
+		<div class="info-fixed-size" id="size-display">Size: 3</div>
+		<div class="info-fixed-size" id="mut-display">Mut: 0</div>
+		<div class="info-fixed-size" id="time-label">Time:</div>
+		<div class="info-fixed-size" id="total-time">0:00:00</div>
+		<div class="info-fixed-size" id="maze-time">0:00:00</div>
+	</div>
+	<div id="escape-show" class="no-show">
+		Hello World
+	</div>
+	<script type="module" src="game.js"> </script>
+</body>
+</html>
