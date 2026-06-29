@@ -42,11 +42,12 @@ infoHandler.setMaze(mazeObj);
 
 // a light is required for MeshPhongMaterial to be seen
 
-window.addEventListener('resize', () => {
+function onResize(){
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
-});
+}
+window.addEventListener('resize', onResize);
 // -- Minimal FPS Controller
 // --- Minimal FPS controls ---
 let yaw = Math.PI;    // camera heading
@@ -164,11 +165,15 @@ function handleVR(dt){
 	c = infoControl.collideWith(c);
 	player.setNewPos(c);
 }
+let oldInVR = true;
 function animate() {
 	const dt = clock.getDelta();
 	const inVR = renderer.xr.isPresenting;
+	if(inVR && !oldInVR) player.updateToVR();
+	if(!inVR && oldInVR) onResize();
 	if(inVR)handleVR(dt);
 	else handlePC(dt);
+	oldInVR = inVR;
 	//
 		//
 	//

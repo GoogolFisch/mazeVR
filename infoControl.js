@@ -42,9 +42,8 @@ class InfoControl{
 		this.directionalLight.position.z = 3;
 		this.scene.add(this.directionalLight);
 		//
-		this.pointlight = new THREE.PointLight( 0xcccccc, 0.7, 10 );
-		this.pointlight.position.set( 0, 0, 0 );
-		this.pointlight.castShadow = false;
+		this.ambientlight = new THREE.AmbientLight( 0xeeeeee, 0.4);
+		this.scene.add(this.ambientlight);
 	}
 	constructor(mazeObj,scene){
 		this.scene = scene;

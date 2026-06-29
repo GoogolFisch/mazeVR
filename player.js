@@ -23,9 +23,10 @@ const vecUp = new THREE.Vector3().set(0,1,0);
 class Player{
 	_setupLight(){
 		//pointlight.parent = camera;
+		this.pointlight = new THREE.PointLight( 0xcccccc, 0.7, 10 );
+		this.pointlight.position.set( 0, 0, 0 );
+		this.pointlight.castShadow = false;
 		this.camera.add(this.pointlight);
-		this.ambientlight = new THREE.AmbientLight( 0xeeeeee, 0.4);
-		this.scene.add(this.ambientlight);
 	}
 	_vrSetup(){
 		this.con0Sel = false;
@@ -80,11 +81,13 @@ class Player{
 		this.scene = scene;
 		this.camera = camera;
 		this.cameraRig = new THREE.Group();
+		this.vrOffseter = new THREE.Group();
 		this.reset();
 		this._setupLight();
 		this._vrSetup();
 		this.cameraRig.add(camera);
-		this.scene.add( this.cameraRig );
+		this.vrOffseter.add(this.cameraRig);
+		this.scene.add(this.vrOffseter);
 		this.lastPos = this.cameraRig.position.clone();
 		this.moveSpeed = 3;
 	}
@@ -110,9 +113,19 @@ class Player{
 	updateRigPC(){
 		this.camera.rotation.set(this.pitch,this.yaw,this.roll,"YXZ");
 		this.camera.position.set(0,0,0);
+		this.vrOffseter.position.set(0,0,0);
+	}
+	updateToVR(){
+		//TODO HERE IS ERROR!
+		this.vrOffseter.position.set(0,0,0);
+		this.vrOffseter.position.sub(this.camera.position.clone());
 	}
 	updateRigVR(){
 		let dif;
+		dif = this.vrOffseter.position.clone();
+		dif.add(this.camera.position);
+		this.cameraRig.position.add(dif);
+		this.vrOffseter.position.sub(dif);
 		if(this.con0Anchor !== null){
 			dif = this.con0Anchor.clone();
 			dif.sub(this.grip0.position);
