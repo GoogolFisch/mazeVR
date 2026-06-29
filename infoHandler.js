@@ -1,10 +1,12 @@
 
 class InfoHandler{
 	constructor(sDisp,mDisp,ttDisp,mtDisp){
-		this.sizeDisplay = sDisp;
-		this.mutDisplay = mDisp;
-		this.ttimeDisplay = ttDisp;
-		this.mtimeDisplay = mtDisp;
+		this.sizeDisplay  = document.getElementById("size-display");
+		this.mutDisplay   = document.getElementById("mut-display");
+		this.ttimeDisplay = document.getElementById("total-time");
+		this.mtimeDisplay = document.getElementById("maze-time");
+		this.infoShow     = document.getElementById("info-show");
+		this.escapeShow   = document.getElementById("escape-show");
 
 		this.ttimer = null;
 		this.mtimer = null;
@@ -47,6 +49,14 @@ class InfoHandler{
 			this.mtimeDisplay.innerText = this._displayTime(this.mtimer);
 		if(this.ttimer !== null)
 			this.ttimeDisplay.innerText = this._displayTime(this.ttimer);
+	}
+	hide(){
+		this.infoShow.classList.add("no-show");
+		this.escapeShow.classList.add("no-show");
+	}
+	show(){
+		this.infoShow.classList.remove("no-show");
+		//this.escapeShow.classList.remove("no-show");
 	}
 }
 

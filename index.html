@@ -15,6 +15,11 @@
 	    /*padding-left: 0.5rem;*/
 	    user-select: none;
     }
+    #console-logger {
+	    z-index: -1;
+	    position:fixed;
+	    top:1.2rem;
+    };
     #escape-show{
 	    user-select: none;
 	    position:absolute;
@@ -56,6 +61,73 @@ const THREE = _THREE;
 	<div id="escape-show" class="no-show">
 		Hello World
 	</div>
+	<div id="console-logger">
+		Hello World
+	</div>
+	<script>
+const originalConsole = {
+  log: console.log,
+  error: console.error,
+  warn: console.warn,
+  info: console.info,
+  debug: console.debug
+};
+const consoleOutput = document.getElementById('console-logger');
+function appendLogToDOM(message, type = 'log') {
+  // Create a div for the log entry
+  const logEntry = document.createElement('div');
+  logEntry.className = `log-entry log-${type}`; // Add classes for styling
+ 
+  // Set the log message (use textContent to avoid XSS risks)
+  logEntry.textContent = message;
+ 
+  // Append to the console output element
+  consoleOutput.appendChild(logEntry);
+ 
+  // Scroll to the bottom to show the latest log
+  consoleOutput.scrollTop = consoleOutput.scrollHeight;
+}
+// Override console.log
+console.log = function(...args) {
+  originalConsole.log.apply(console, args);
+  const message = args.map(arg => formatLogData(arg)).join(' ');
+  appendLogToDOM(message, 'log');
+};
+ 
+// Repeat for other console methods (error, warn, info, debug)
+console.error = function(...args) {
+  originalConsole.error.apply(console, args);
+  const message = args.map(arg => formatLogData(arg)).join(' ');
+  appendLogToDOM(message, 'error');
+};
+ 
+console.warn = function(...args) {
+  originalConsole.warn.apply(console, args);
+  const message = args.map(arg => formatLogData(arg)).join(' ');
+  appendLogToDOM(message, 'warn');
+};
+ 
+console.info = function(...args) {
+  originalConsole.info.apply(console, args);
+  const message = args.map(arg => formatLogData(arg)).join(' ');
+  appendLogToDOM(message, 'info');
+};
+ 
+console.debug = function(...args) {
+  originalConsole.debug.apply(console, args);
+  const message = args.map(arg => formatLogData(arg)).join(' ');
+  appendLogToDOM(message, 'debug');
+};
+function formatLogData(data) {
+  if (typeof data === 'object' && data !== null) {
+    // Stringify objects/arrays with indentation for readability
+    return JSON.stringify(data, null, 2);
+  }
+  // For primitives (strings, numbers, booleans), return as-is
+  return String(data);
+}
+
+	</script>
 	<script type="module" src="game.js"> </script>
 </body>
 </html>
