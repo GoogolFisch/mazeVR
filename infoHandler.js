@@ -1,16 +1,82 @@
 
 class InfoHandler{
-	constructor(sDisp,mDisp,ttDisp,mtDisp){
+	constructor(vrbutton,canvCallBack){
 		this.sizeDisplay  = document.getElementById("size-display");
 		this.mutDisplay   = document.getElementById("mut-display");
 		this.ttimeDisplay = document.getElementById("total-time");
 		this.mtimeDisplay = document.getElementById("maze-time");
 		this.infoShow     = document.getElementById("info-show");
 		this.escapeShow   = document.getElementById("escape-show");
+		this.escapeGrid   = document.getElementById("escape-grid");
 
-		this.ttimer = null;
-		this.mtimer = null;
-		this.noTimer = false;
+		this.canvasCallb = canvCallBack;
+		this.VRButton = vrbutton;
+		this.ttimer   = null;
+		this.mtimer   = null;
+		this.noTimer  = false;
+		this.maze     = null;
+		this._makeSelectors(null);
+		this._makeVRButton();
+	}
+	setMaze(mz){this.maze = mz;}
+	_makeRangeSelector(min,max,val,id,label,adding,callback){
+		let sel = document.createElement("input");
+		sel.type = "range";
+		sel.min = min;
+		sel.max = max;
+		sel.value = val;
+		sel.id = id;
+		let lab = document.createElement("label");
+		lab.for = id;
+		lab.innerText = label;
+		let valEl = document.createElement("div");
+		valEl.innerText = val;
+		sel.addEventListener("input",(v) => {
+			valEl.innerText = v.target.value;
+		});
+		adding.appendChild(lab);
+		adding.appendChild(sel);
+		adding.appendChild(valEl);
+		return {sel:sel,lab:lab,val:valEl};
+	}
+	_makeSelectors(callback){
+		this.optionsGrid = document.createElement("div");
+		this.optionsGrid.style.display = "grid"
+		this.optionsGrid.style.gridTemplateColumns = "auto auto auto"
+		let szS = this._makeRangeSelector(
+			2,8,3,"size-selector","Size:",this.optionsGrid,null);
+		let mtS = this._makeRangeSelector(
+			0,8,0,"mut-selector","Mutations:",this.optionsGrid,null);
+		this.escapeGrid.appendChild(this.optionsGrid);
+		this.sizeSelector = szS.sel;
+		this.mutSelector  = mtS.sel;
+		this.sizeWrapper = szS;
+		this.mutWrapper  = mtS;
+		//
+		this.mazeButton = document.createElement("button");
+		this.mazeButton.innerText = "New Maze";
+		/*this.mazeButton.style.width = "fit-content";
+		this.mazeButton.style.backgroundColor = "rgba(48,48,48,0.1)";
+		this.mazeButton.style.border = "2px solid gray";
+		this.mazeButton.style.borderRadius = "4px";*/
+		this.mazeButton.addEventListener("click",(e) => this._makeNewMaze(e));
+		this.escapeGrid.appendChild(this.mazeButton);
+	}
+	_makeNewMaze(event){
+		if(this.maze == null)return;
+		this.maze.setSize(
+			this.sizeSelector.value - 0,
+			this.mutSelector.value - 0
+		);
+		this.canvCallBack();
+	}
+	_makeVRButton(){
+		this.VRButtonDiv = document.createElement("div");
+		this.VRButton.style.position = "";
+		this.VRButton.style.display = "inline-block";
+		this.VRButtonDiv.appendChild(this.VRButton);
+		this.escapeGrid.appendChild(this.VRButtonDiv);
+		//this.escapeShow.appendChild(this.escapeGrid);
 	}
 	setSize(value){
 		this.sizeDisplay.innerText = `Size: ${value}`;
@@ -58,6 +124,9 @@ class InfoHandler{
 		this.infoShow.classList.remove("no-show");
 		//this.escapeShow.classList.remove("no-show");
 	}
+	hideEsc(){ this.escapeShow.classList.add("no-show"); }
+	showEsc(){ this.escapeShow.classList.remove("no-show"); }
+	showAll(){this.show();this.showEsc();}
 }
 
 

@@ -30,7 +30,9 @@ class Maze{
 	}
 	setSize(size,mut){
 		this.infoHandler.setSize(size);
+		this.size = size;
 		this.infoHandler.setMutation(mut);
+		this.mutate = mut;
 	}
 	genMazeJoin(){
 		this.mz = [];
@@ -335,10 +337,15 @@ class Maze{
 		return pos;
 	}
 
-	shouldTimerStart(pos){
+	shouldEnter(pos){
 		return  0 < pos.x && pos.x < 1 &&
 			0 < pos.y && pos.y < 1 &&
 			0 < pos.z && pos.z < 1;
+	}
+	shouldTimerStart(pos){
+		return  0 < pos.x && pos.x < this.size &&
+			0 < pos.y && pos.y < this.size &&
+			0 < pos.z && pos.z < this.size;
 	}
 	shouldNoCount(pos){
 		return  0 > pos.x || 0 > pos.y || 0 > pos.z;
