@@ -251,10 +251,10 @@ class Maze{
 			ry *= fac;
 			rz *= fac;
 		}
-		return {x:Math.round(pos.x) + rx,
-			y:Math.round(pos.y) + ry,
-			z:Math.round(pos.z) + rz}
-
+		pos.set(Math.round(pos.x) + rx,
+			Math.round(pos.y) + ry,
+			Math.round(pos.z) + rz);
+		return pos;
 	}
 	_collideInside(pos,radius){
 		let fx = pos.x % 1;
@@ -277,7 +277,8 @@ class Maze{
 			fz =     radius;
 		if((ft & (1 << 5)) == 0 && fz > 1 - radius)
 			fz = 1 - radius;
-		return {x:fx + hx,y: fy + hy,z:fz + hz}; 
+		pos.set(fx + hx,fy + hy,fz + hz); 
+		return pos;
 	}
 	_collideOutside(pos,radius){
 		let fx = pos.x - Math.floor(pos.x);
@@ -303,9 +304,10 @@ class Maze{
 			pos.z >= this.size && inY && inX) fz =     radius;
 		if((ft & (1 << 4)) == 0 && fz > 1 - radius &&
 			pos.z <= 0         && inY && inX) fz = 1 - radius;
-		return {x:Math.floor(pos.x) + fx,
-			y:Math.floor(pos.y) + fy,
-			z:Math.floor(pos.z) + fz};
+		pos.set(Math.floor(pos.x) + fx,
+			Math.floor(pos.y) + fy,
+			Math.floor(pos.z) + fz);
+		return pos;
 	}
 	collideWith(pos,radius = 0.15){
 		if(this._collideInsideAABB(pos)){
@@ -321,17 +323,20 @@ class Maze{
 	}
 	collideCast(pos,pos2){
 		const radius = 0.15;
-		let dir = {x:pos2.x - pos.x,y:pos2.y - pos.y,z:pos2.z - pos.z};
+		let dir = pos2.clone();
+		dir.sub(pos);
 		let len = Math.sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 		let fact = radius / len;
-		dir = {x:dir.x * fact,y:dir.y * fact,z:dir.z * fact};
+		dir.set(dir.x * fact,dir.y * fact,dir.z * fact);
 		let delta = 1;
 		// this is dumb!
 		for(let itr = 0;itr < len;itr += delta){
 			delta = Math.min(radius,len-itr);
-			pos = { x:pos.x + dir.x * delta / radius,
-				y:pos.y + dir.y * delta / radius,
-				z:pos.z + dir.z * delta / radius};
+			let idir = dir.clone();
+			idir.set( idir.x * delta / radius,
+				idir.y * delta / radius,
+				idir.z * delta / radius);
+			pos.add(idir);
 			pos = this.collideWith(pos,radius);
 		}
 		return pos;

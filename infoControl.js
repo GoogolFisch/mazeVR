@@ -45,14 +45,9 @@ class InfoControl{
 		this.pointlight = new THREE.PointLight( 0xcccccc, 0.7, 10 );
 		this.pointlight.position.set( 0, 0, 0 );
 		this.pointlight.castShadow = false;
-		//pointlight.parent = camera;
-		this.camera.add(this.pointlight);
-		this.ambientlight = new THREE.AmbientLight( 0xeeeeee, 0.4);
-		this.scene.add(this.ambientlight);
 	}
-	constructor(mazeObj,camera,scene){
+	constructor(mazeObj,scene){
 		this.scene = scene;
-		this.camera = camera;
 		this.mazeObj = mazeObj;
 		this._setupLight();
 		//

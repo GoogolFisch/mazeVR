@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import * as MAZE from './mazeGen.js';
 import * as FENCE_MODEL from './modelGen.js';
+import * as PLAYER from './player.js';
 import * as INFO_HANDLER from './infoHandler.js';
 import * as INFO_CONTROL from './infoControl.js';
 import { VRButton } from "three/addons/webxr/VRButton.js";
@@ -18,11 +19,6 @@ const camera = new THREE.PerspectiveCamera(
 	0.01,
 	100
 );
-const cameraRig = new THREE.Group();
-cameraRig.position.set(0.5, 0.5, -1.5);
-cameraRig.rotation.set(Math.PI,0,0);
-cameraRig.add(camera);
-scene.add( cameraRig );
 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -31,6 +27,8 @@ renderer.xr.enabled = true;
 const canvas = renderer.domElement;
 document.body.appendChild(canvas);
 
+const player = new PLAYER.Player(renderer,camera,scene);
+
 //const geometry = new THREE.BoxGeometry(1, 1, 1);
 const BoundingFrame = FENCE_MODEL.makeFrameWindow(3,1);
 const infoHandler = new INFO_HANDLER.InfoHandler(
@@ -38,7 +36,7 @@ const infoHandler = new INFO_HANDLER.InfoHandler(
 infoHandler.resetTimer();
 const mazeObj = new MAZE.Maze(3,0,BoundingFrame,infoHandler);
 mazeObj.reMakeMaze(scene);
-const infoControl = new INFO_CONTROL.InfoControl(mazeObj,camera,scene);
+const infoControl = new INFO_CONTROL.InfoControl(mazeObj,scene);
 infoHandler.setMaze(mazeObj);
 
 
@@ -63,10 +61,6 @@ addEventListener("keyup", (e) => keys.delete(e.code));
 
 // Pointer lock
 
-const forward = new THREE.Vector3();
-const right = new THREE.Vector3();
-const up = new THREE.Vector3().set(0,1,0);
-
 const clock = new THREE.Clock();
 let inMaze = false;
 
@@ -79,10 +73,7 @@ function mouseLock(){
 function resetGame(){
 	mazeObj.reMakeMaze(scene);
 	infoHandler.resetTimer();
-	cameraRig.position.set(0.5,0.5,-1.5);
-	pitch = 0;
-	roll = 0;
-	yaw = Math.PI;
+	player.reset();
 }
 function init(){
 	infoHandler.canvCallBack = () => {mouseLock();resetGame();};
@@ -92,10 +83,8 @@ function init(){
 			reinitNone();
 			return;
 		}
-		yaw   -= e.movementX * sensitivity;
-		pitch -= e.movementY * sensitivity;
-		const limit = Math.PI / 2 - 0.02;
-		pitch = Math.max(-limit, Math.min(limit, pitch));
+		player.addYaw  (e.movementX * sensitivity);
+		player.addPitch(e.movementY * sensitivity);
 	});
 }
 init();
@@ -108,108 +97,46 @@ function reinitPC(){
 	stopInit = false;
 	infoHandler.show();
 }
-const controller0 = renderer.xr.getController(0);
-const controller1 = renderer.xr.getController(1);
-cameraRig.add(controller0, controller1);
-const grip0 = renderer.xr.getControllerGrip(0);
-const grip1 = renderer.xr.getControllerGrip(1);
-function onSelectStart() { console.log('select start'); }
-function onSelectEnd()   { console.log('select end'); }
-
-// Some runtimes use squeeze for grip/secondary
-function onSqueezeStart() { console.log('squeeze start'); }
-function onSqueezeEnd()   { console.log('squeeze end'); }
-
-controller0.addEventListener('selectstart', onSelectStart);
-controller0.addEventListener('selectend', onSelectEnd);
-controller0.addEventListener('squeezestart', onSqueezeStart);
-controller0.addEventListener('squeezeend', onSqueezeEnd);
-
-controller1.addEventListener('selectstart', onSelectStart);
-controller1.addEventListener('selectend', onSelectEnd);
-controller1.addEventListener('squeezestart', onSqueezeStart);
-controller1.addEventListener('squeezeend', onSqueezeEnd);
-console.log([controller0,controller1,grip0,grip1]);
-//
-const boxgeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-const cube0 = new THREE.Mesh( boxgeo,
-	new THREE.MeshStandardMaterial({ color: 0x33aaff })
-);
-const cube1 = new THREE.Mesh( boxgeo,
-	new THREE.MeshStandardMaterial({ color: 0x33aaff })
-);
-grip0.add(cube0);
-cameraRig.add(grip0);
-grip1.add(cube1);
-cameraRig.add(grip1);
 
 //
-function readControllerInput(controller) {
-	//console.log([controller,controller.inputSource]);
-	const inputSource = controller.inputSource;
-	if (!inputSource || !inputSource.gamepad)
-		return null;
-	const gp = inputSource.gamepad;
-	const buttons = gp.buttons.map(b => b.pressed);
-	const axes = gp.axes.slice(); // often [x,y] thumbstick / touchpad
-	return { buttons, axes,
-		handedness: inputSource.handedness ?? "unknown"
-	};
-}
-function hookEvents(controller) {
-	controller.addEventListener("selectstart", () => controller.userData.selecting = true);
-	controller.addEventListener("selectend", () => controller.userData.selecting = false);
-}
-hookEvents(controller0);
-hookEvents(controller1);
-function reinitVR(){
-	stopInit = false;
-	infoHandler.hide();
-}
-//init();
 reinitNone();
 
-let lastCamera = cameraRig.position;
 function handlePC(dt){
 	if(document.pointerLockElement === canvas) infoHandler.hideEsc();
 	if(document.pointerLockElement !== canvas) infoHandler.showEsc();
 	//const updated = cameraRig.update( delta );
 	// Update cameraRig rotation from yaw/pitch
-	cameraRig.rotation.set(pitch,yaw,roll,"YXZ");
+	player.updateRigPC();
 
 
 	// Movement (no collisions; just move cameraRig)
 	//forward.set(0, 0, -1).applyQuaternion(cameraRig.quaternion).setY(0).normalize();
 	//right.set(1, 0, 0).applyQuaternion(cameraRig.quaternion).setY(0).normalize();
-	forward.set(0, 0, -1).applyQuaternion(cameraRig.quaternion).normalize();
-	right.set(1, 0, 0).applyQuaternion(cameraRig.quaternion).normalize();
 
 	const v = new THREE.Vector3();
-	if (keys.has("KeyW")) v.add(forward);
-	if (keys.has("KeyS")) v.sub(forward);
-	if (keys.has("KeyD")) v.add(right);
-	if (keys.has("KeyA")) v.sub(right);
-	if (keys.has("Space")) v.add(up);
-	if (keys.has("ShiftLeft")) v.sub(up);
-	if (keys.has("KeyE")) roll += dt;
-	if (keys.has("KeyQ")) roll -= dt;
+	if (keys.has("KeyW")) v.add(player.getForward());
+	if (keys.has("KeyS")) v.sub(player.getForward());
+	if (keys.has("KeyD")) v.add(player.getRight());
+	if (keys.has("KeyA")) v.sub(player.getRight());
+	if (keys.has("Space")) v.add(player.getUp());
+	if (keys.has("ShiftLeft")) v.sub(player.getUp());
+	if (keys.has("KeyE")) player.addRoll(dt);
+	if (keys.has("KeyQ")) player.addRoll(-dt);
 
-	if (v.lengthSq() > 0) v.normalize().multiplyScalar(moveSpeed * dt);
+	if (v.lengthSq() > 0) v.normalize()
 	if(!keys.has("KeyL")){
-		let oldCamera3 = cameraRig.position.clone();
-		cameraRig.position.add(v); // *
-		let c = cameraRig.position;
-		c = mazeObj.collideCast(oldCamera3,c);
-		c = infoControl.collideWith(c);
-		cameraRig.position.set(c.x,c.y,c.z);
+		player.move(v,dt);
+		let oldCam3 = player.getOld();
+		let newCam3 = player.getNew();
+		newCam3 = mazeObj.collideCast(oldCam3,newCam3);
+		newCam3 = infoControl.collideWith(newCam3);
+		player.setNewPos(newCam3);
 	}else{
-		cameraRig.position.add(v);
+		player.move(v,dt);
 	}
 }
 let counter = 0;
 function handleVR(dt){
-	let cam = camera;
-	renderer.xr.getCamera(cam); // safe even if already set
 	counter += dt
 	if(counter > 1){
 		counter--;
@@ -231,23 +158,27 @@ function handleVR(dt){
 		}
 		// */
 	}
-	let c = cam.position;
-	c = mazeObj.collideCast(lastCamera,c);
+	player.updateRigVR();
+	let c = player.getNew();
+	c = mazeObj.collideCast(player.getOld(),c);
 	c = infoControl.collideWith(c);
-	cam.position.copy(c.x,c.y,c.z);
+	player.setNewPos(c);
 }
 function animate() {
 	const dt = clock.getDelta();
 	const inVR = renderer.xr.isPresenting;
 	if(inVR)handleVR(dt);
 	else handlePC(dt);
-	lastCamera = cameraRig.position.clone();
-	if(mazeObj.shouldNoCount(cameraRig.position))inMaze = false;
-	if(mazeObj.shouldEnter  (cameraRig.position))inMaze =  true;
-	if(mazeObj.shouldTimerStart(cameraRig.position)){
+	//
+		//
+	//
+	player.finishStep();
+	if(mazeObj.shouldNoCount(player.getOld()))inMaze = false;
+	if(mazeObj.shouldEnter  (player.getOld()))inMaze =  true;
+	if(mazeObj.shouldTimerStart(player.getOld())){
 		infoHandler.startMazeTimer();
 	}
-	if(mazeObj.shouldWin(cameraRig.position) && inMaze){
+	if(mazeObj.shouldWin(player.getOld()) && inMaze){
 		infoHandler.stopTimer();
 	}
 
