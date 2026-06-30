@@ -49,6 +49,8 @@ class Player{
 		this.con1Squ = false;
 		this.con0Anchor = null;
 		this.con1Anchor = null;
+		this.con0Goal = null;
+		this.con1Goal = null;
 		//
 		this.controller0 = this.renderer.xr.getController(0);
 		this.controller1 = this.renderer.xr.getController(1);
@@ -76,7 +78,15 @@ class Player{
 		//console.log([controller0,controller1,grip0,grip1]);
 		//
 		this.boxgeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-		this.con0Mat = new THREE.MeshPhongMaterial({ color: 0x33aaff })
+		this.goalMat = new THREE.MeshPhongMaterial({ color: 0xffbb88 });
+		this.con0GoalObj = new THREE.Mesh(this.boxgeo,this.goalMat);
+		this.con1GoalObj = new THREE.Mesh(this.boxgeo,this.goalMat);
+		this.con0GoalObj.visible = false;
+		this.con1GoalObj.visible = false;
+		this.scene.add(this.con0GoalObj);
+		this.scene.add(this.con1GoalObj);
+		//
+		this.con0Mat = new THREE.MeshPhongMaterial({ color: 0x33aaff });
 		this.con1Mat = new THREE.MeshPhongMaterial({ color: 0x33aaff });
 		this.cube0 = new THREE.Mesh(this.boxgeo,this.con0Mat);
 		this.cube1 = new THREE.Mesh(this.boxgeo,this.con1Mat);
@@ -101,8 +111,9 @@ class Player{
 	//
 	//
 	//
-	constructor(renderer,camera,scene){
+	constructor(renderer,camera,scene,maze){
 		this.renderer = renderer;
+		this.maze = maze;
 		this.scene = scene;
 		this.camera = camera;
 		this.cameraRig = new THREE.Group();
@@ -150,6 +161,15 @@ class Player{
 		this.vrOffseter.position.set(0,0,0);
 		this.vrOffseter.position.sub(this.camera.position.clone());
 	}
+	_findTPPos(contr){
+		vecFront.set(0, 0, -1);
+		vecFront.applyQuaternion(this.cameraRig.quaternion);
+		vecFront.applyQuaternion(contr.quaternion).normalize();
+		//
+		let goal = this.maze.lineCast(contr.position,vecFront);
+		goal = this.maze.lineCast(this.cameraRig.position,goal);
+		return goal;
+	}
 	updateRigVR(){
 		let dif;
 		dif = this.vrOffseter.position.clone();
@@ -176,6 +196,27 @@ class Player{
 		else this.con0Anchor = this.grip0.position.clone();
 		if(!this.con1Squ) this.con1Anchor = null;
 		else this.con1Anchor = this.grip1.position.clone();
+		//
+		if(this.con0Sel){
+			this.con0Goal = this._findTPPos(this.grip0);
+			this.con0GoalObj.visible = true;
+			this.con0GoalObj.position.copy(this.con0Goal);
+		}
+		else if(this.con0Goal !== null){
+			this.cameraRig.position.copy(this.con0Goal);
+			this.con0GoalObj.visible = false;
+			this.con0Goal = null;
+		}
+		if(this.con1Sel){
+			this.con1Goal = this._findTPPos(this.grip1);
+			this.con1GoalObj.visible = true;
+			this.con1GoalObj.position.copy(this.con1Goal);
+		}
+		else if(this.con1Goal !== null){
+			this.cameraRig.position.copy(this.con1Goal);
+			this.con1GoalObj.visible = false;
+			this.con1Goal = null;
+		}
 		this._updateContr0();
 		this._updateContr1();
 	}

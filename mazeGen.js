@@ -31,6 +31,8 @@ class Maze{
 		this.objs = [];
 		this.wall = wall;
 		this.infoHandler = infoHandler;
+
+		this.radius = 0.15;
 	}
 	setSize(size,mut){
 		this.infoHandler.setSize(size);
@@ -43,7 +45,6 @@ class Maze{
 		const sz = this.size;
 		const sz3 = sz * sz * sz;
 		for(let cnt = 0;cnt < sz3;cnt++)this.mz.push(0);
-		debugger;
 		const select = Math.floor(Math.random() * sz3);
 		let target = [select];
 		let touched = 0;
@@ -79,7 +80,6 @@ class Maze{
 				break;
 			}
 			if(counter <= 0){
-				debugger;
 				target.splice(id,1);
 				touched++;
 				continue;
@@ -366,7 +366,8 @@ class Maze{
 			Math.floor(pos.z) + fz);
 		return pos;
 	}
-	collideWith(pos,radius = 0.15){
+	collideWith(pos,radius = null){
+		if(radius === null)radius = this.radius;
 		if(this._collideInsideAABB(pos)){
 			pos = this._collideInside(pos,radius);
 		}else if(this._collideRadiusAABB(pos,radius)){
@@ -378,10 +379,10 @@ class Maze{
 
 		return pos;
 	}
-	collideCast(pos,pos2){
-		const radius = 0.15;
+	collideCast(from,pos2){
+		const radius = this.radius;
 		let dir = pos2.clone();
-		dir.sub(pos);
+		dir.sub(from);
 		let len = Math.sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
 		let fact = radius / len;
 		dir.set(dir.x * fact,dir.y * fact,dir.z * fact);
@@ -393,9 +394,38 @@ class Maze{
 			idir.set( idir.x * delta / radius,
 				idir.y * delta / radius,
 				idir.z * delta / radius);
-			pos.add(idir);
-			pos = this.collideWith(pos,radius);
+			from.add(idir);
+			from = this.collideWith(from,radius);
 		}
+		return from;
+	}
+	lineCast(pos,dir){
+		pos = pos.clone();
+		let ppos = pos;
+		if(0.1 > dir.x * dir.x + dir.y * dir.y + dir.z * dir.z)
+			return pos;
+		dir = dir.clone();
+		dir.multiplyScalar(this.radius / dir.length());
+		while(1){
+			pos = ppos.clone();
+			pos.add(dir);
+			if(dir.x > 0 && pos.x > self.size + 2)break;
+			if(dir.x < 0 && pos.x <           - 2)break;
+			if(dir.y > 0 && pos.y > self.size + 2)break;
+			if(dir.y < 0 && pos.y <           - 2)break;
+			if(dir.z > 0 && pos.z > self.size + 2)break;
+			if(dir.z < 0 && pos.z <           - 2)break;
+
+			if(this._collideAABB(pos)){
+				if(this._collideInside(pos,this.radius))
+					break;
+			}
+			
+			//
+			ppos = pos;
+		}
+		pos = this.collideCast(ppos,pos);
+
 		return pos;
 	}
 

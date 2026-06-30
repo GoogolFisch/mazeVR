@@ -27,7 +27,6 @@ renderer.xr.enabled = true;
 const canvas = renderer.domElement;
 document.body.appendChild(canvas);
 
-const player = new PLAYER.Player(renderer,camera,scene);
 
 //const geometry = new THREE.BoxGeometry(1, 1, 1);
 const BoundingFrame = FENCE_MODEL.makeFrameWindow(3,1);
@@ -39,6 +38,7 @@ mazeObj.reMakeMaze(scene);
 const infoControl = new INFO_CONTROL.InfoControl(mazeObj,scene);
 infoHandler.setMaze(mazeObj);
 
+const player = new PLAYER.Player(renderer,camera,scene,mazeObj);
 
 // a light is required for MeshPhongMaterial to be seen
 
