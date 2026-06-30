@@ -28,6 +28,20 @@ class Player{
 		this.pointlight.castShadow = false;
 		this.camera.add(this.pointlight);
 	}
+	_updateContr0(){
+		if(this.con0Sel && this.con0Squ)
+			this.con0Mat.color.setHex(0x77ffff);
+		else if(this.con0Sel) this.con0Mat.color.setHex(0x77aaff);
+		else if(this.con0Squ) this.con0Mat.color.setHex(0x33ffff);
+		else                  this.con0Mat.color.setHex(0x33aaff);
+	}
+	_updateContr1(){
+		if(this.con1Sel && this.con1Squ)
+			this.con1Mat.color.setHex(0x77ffff);
+		else if(this.con1Sel) this.con1Mat.color.setHex(0x77aaff);
+		else if(this.con1Squ) this.con1Mat.color.setHex(0x33ffff);
+		else                  this.con1Mat.color.setHex(0x33aaff);
+	}
 	_vrSetup(){
 		this.con0Sel = false;
 		this.con1Sel = false;
@@ -62,16 +76,27 @@ class Player{
 		//console.log([controller0,controller1,grip0,grip1]);
 		//
 		this.boxgeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-		this.cube0 = new THREE.Mesh(this.boxgeo,
-			new THREE.MeshStandardMaterial({ color: 0x33aaff })
-		);
-		this.cube1 = new THREE.Mesh(this.boxgeo,
-			new THREE.MeshStandardMaterial({ color: 0x33aaff })
-		);
+		this.con0Mat = new THREE.MeshPhongMaterial({ color: 0x33aaff })
+		this.con1Mat = new THREE.MeshPhongMaterial({ color: 0x33aaff });
+		this.cube0 = new THREE.Mesh(this.boxgeo,this.con0Mat);
+		this.cube1 = new THREE.Mesh(this.boxgeo,this.con1Mat);
+		this._updateContr0();
+		this._updateContr1();
 		this.grip0.add(this.cube0);
 		this.cameraRig.add(this.grip0);
 		this.grip1.add(this.cube1);
 		this.cameraRig.add(this.grip1);
+		this.controller0.addEventListener("connected", (e) => {
+			console.log(e.data.gamepad);
+		})
+		/*
+		this.renderer.xr.addEventListener( 'sessionstart', (e) => {
+			this.updateToVR();
+		});
+		this.renderer.xr.addEventListener( 'sessionend', (e) => {
+			this.updateToPC();
+		} );*/
+
 	}
 	//
 	//
@@ -82,13 +107,13 @@ class Player{
 		this.camera = camera;
 		this.cameraRig = new THREE.Group();
 		this.vrOffseter = new THREE.Group();
+		this.lastPos = this.cameraRig.position.clone();
 		this.reset();
 		this._setupLight();
 		this._vrSetup();
 		this.cameraRig.add(camera);
 		this.vrOffseter.add(this.cameraRig);
 		this.scene.add(this.vrOffseter);
-		this.lastPos = this.cameraRig.position.clone();
 		this.moveSpeed = 3;
 	}
 	reset(){
@@ -99,6 +124,7 @@ class Player{
 		//this.yaw = -Math.PI / 2;
 		this.yaw = Math.PI;
 		this.roll = 0;
+		this.finishStep();
 	}
 	//
 	//
@@ -115,8 +141,12 @@ class Player{
 		this.camera.position.set(0,0,0);
 		this.vrOffseter.position.set(0,0,0);
 	}
+	updateToPC(){
+		this.camera.position.set(0,0,0);
+		this.vrOffseter.position.set(0,0,0);
+	}
 	updateToVR(){
-		//TODO HERE IS ERROR!
+		this.cameraRig.position.add(this.vrOffseter.position);
 		this.vrOffseter.position.set(0,0,0);
 		this.vrOffseter.position.sub(this.camera.position.clone());
 	}
@@ -124,6 +154,11 @@ class Player{
 		let dif;
 		dif = this.vrOffseter.position.clone();
 		dif.add(this.camera.position);
+		if(0.5 < dif.x * dif.x + dif.y * dif.y + dif.z * dif.z){
+			//console.log(dif);
+			this.updateToVR();
+			dif.set(0,0,0);
+		}
 		this.cameraRig.position.add(dif);
 		this.vrOffseter.position.sub(dif);
 		if(this.con0Anchor !== null){
@@ -141,6 +176,8 @@ class Player{
 		else this.con0Anchor = this.grip0.position.clone();
 		if(!this.con1Squ) this.con1Anchor = null;
 		else this.con1Anchor = this.grip1.position.clone();
+		this._updateContr0();
+		this._updateContr1();
 	}
 	getForward(){
 		vecFront.set(0, 0, -1);

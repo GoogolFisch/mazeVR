@@ -123,6 +123,7 @@ function handlePC(dt){
 	if (keys.has("ShiftLeft")) v.sub(player.getUp());
 	if (keys.has("KeyE")) player.addRoll(dt);
 	if (keys.has("KeyQ")) player.addRoll(-dt);
+	if (keys.has("KeyK")) mazeObj.reMakeMaze(scene);
 
 	if (v.lengthSq() > 0) v.normalize()
 	if(!keys.has("KeyL")){
@@ -169,7 +170,7 @@ let oldInVR = true;
 function animate() {
 	const dt = clock.getDelta();
 	const inVR = renderer.xr.isPresenting;
-	if(inVR && !oldInVR) player.updateToVR();
+	//if(inVR && !oldInVR) player.updateToVR();
 	if(!inVR && oldInVR) onResize();
 	if(inVR)handleVR(dt);
 	else handlePC(dt);

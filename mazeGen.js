@@ -19,6 +19,10 @@ function materialForF(x,y,z,dir,sz){
 		flatShading: true,
 	});
 }
+function setOpen(arr,idx,p2,dir){
+	arr[idx] |= 1 << dir;
+	arr[p2] |= 1 << (1 ^ dir);
+}
 class Maze{
 	constructor(sz,mutate,wall=null,infoHandler=null){
 		this.size = sz;
@@ -33,6 +37,58 @@ class Maze{
 		this.size = size;
 		this.infoHandler.setMutation(mut);
 		this.mutate = mut;
+	}
+	genMazeWeb(){
+		this.mz = [];
+		const sz = this.size;
+		const sz3 = sz * sz * sz;
+		for(let cnt = 0;cnt < sz3;cnt++)this.mz.push(0);
+		debugger;
+		const select = Math.floor(Math.random() * sz3);
+		let target = [select];
+		let touched = 0;
+		this.mz[select] = 1024;
+		let pos,dir,p2;
+		let px,py,pz;
+		while(target.length){
+			let id = Math.floor(Math.random() * target.length);
+			pos = target[id];
+
+			px = pos % sz;
+			py = Math.floor(pos / sz) % sz;
+			pz = Math.floor(pos / sz / sz) % sz;
+			dir = -1;
+			p2 = -1;
+			let counter;
+			let pic = [0,1,2,3,4,5];
+			for(counter = 20;counter > 0;counter--){
+				let pdir = Math.random() * pic.length;
+				pdir = Math.floor(pdir);
+				dir = pic[pdir];
+				pic.splice(pdir,1);
+				//
+				if(dir === null){counter = 0;break;}
+				p2 = getOffFrom(pos,sz,dir);
+				if(px <=      0 && dir === 0)continue;
+				if(px >= sz - 1 && dir === 1)continue;
+				if(py <=      0 && dir === 2)continue;
+				if(py >= sz - 1 && dir === 3)continue;
+				if(pz <=      0 && dir === 4)continue;
+				if(pz >= sz - 1 && dir === 5)continue;
+				if(this.mz[p2] !== 0)continue;
+				break;
+			}
+			if(counter <= 0){
+				debugger;
+				target.splice(id,1);
+				touched++;
+				continue;
+			}
+			setOpen(this.mz,pos,p2,dir);
+			target.push(p2);
+		}
+		this.mz[select] &= ~1024;
+		return this.mz;
 	}
 	genMazeJoin(){
 		this.mz = [];
@@ -55,7 +111,8 @@ class Maze{
 		let pos,dir,p2;
 		while(target.length){
 			let id = Math.floor(Math.random() * target.length);
-			pos = target.pop(id);
+			pos = target[id];
+			target.splice(id,1);
 
 			if(this.mz[pos] !== 0)continue;
 			px = pos % sz;
@@ -75,10 +132,9 @@ class Maze{
 				if(this.mz[p2] === 0)continue;
 				break;
 			}
-			this.mz[pos] |= 1 << dir;
-			this.mz[p2] |= 1 << (1 ^ dir);
+			setOpen(this.mz,this.size,pos,dir);
 			//
-				if(px >      0)target.push(pos -       1);
+			if(px >      0)target.push(pos -       1);
 			if(px < sz - 1)target.push(pos +       1);
 			if(py >      0)target.push(pos -      sz);
 			if(py < sz - 1)target.push(pos +      sz);
@@ -204,7 +260,8 @@ class Maze{
 			scene.remove(v);
 		});
 		//this.objs = this.makeMaze(() => this.genMazeJoin());
-		this.genMazeJoin();
+		//this.genMazeJoin();
+		this.genMazeWeb();
 		this.genMazeMutate();
 		this.objs = this.makeMaze();
 		this.objs.forEach((v) => {
